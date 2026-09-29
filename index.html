@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Algorithm Millionaire – ผจญภัยโลกอัลกอริทึม (ว17101 ม.1)</title>
+    
+    <!-- Google Fonts: Kanit & Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        kanit: ['Kanit', 'sans-serif'],
+                        sarabun: ['Sarabun', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            dark: '#0b0f19',
+                            card: '#151c2e',
+                            border: '#2a3655',
+                            neonBlue: '#38bdf8',
+                            neonPurple: '#a855f7',
+                            neonPink: '#f43f5e',
+                            neonGreen: '#10b981',
+                            neonYellow: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #080c14;
+            color: #f1f5f9;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Kanit', sans-serif;
+        }
+
+        /* Glassmorphism Sci-Fi Panels */
+        .cyber-glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.8);
+        }
+
+        .cyber-card-gold {
+            background: rgba(30, 27, 75, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.3);
+        }
+
+        /* 11x11 Grid Board Design */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(11, minmax(0, 1fr));
+            grid-template-rows: repeat(11, minmax(0, 1fr));
+            gap: 2px;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 820px;
+            margin: 0 auto;
+            background-color: #1e293b;
+            padding: 4px;
+            border-radius: 1.5rem;
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.15);
+        }
+
+        /* Tile Styling */
+        .board-tile {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px;
+            border-radius: 0.5rem;
+            font-size: 0.65rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        @media (min-width: 640px) {
+            .board-tile {
+                padding: 4px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Glowing Dice Effect */
+        .dice-glow {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+            animation: pulseDice 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseDice {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(168, 85, 247, 0.9); }
+        }
+
+        /* Player Tokens */
+        .player-token {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 20;
+        }
+
+        @media (min-width: 640px) {
+            .player-token {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #38bdf8;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen text-slate-100 flex flex-col justify-between">
+
+    <!-- 1. SETUP / CONFIGURATION SCREEN -->
+    <div id="screen-setup" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+        <div class="cyber-glass max-w-xl w-full rounded-3xl p-6 sm:p-8 space-y-6 border-2 border-sky-500/40 shadow-2xl">
+            <!-- Game Logo Banner -->
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-purple-600 text-white text-3xl shadow-lg shadow-sky-500/30 animate-bounce mb-2">
+                    <i class="fa-solid fa-cubes-stacked"></i>
+                </div>
+                <h1 class="font-heading font-extrabold text-2xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-purple-300 to-pink-400">
+                    ALGORITHM MILLIONAIRE
+                </h1>
+                <p class="text-xs sm:text-sm text-sky-300">ผจญภัยโลกอัลกอริทึม • วิทยาการคำนวณ ม.1</p>
+            </div>
+
+            <!-- Player Settings Form -->
+            <div class="space-y-4 text-xs sm:text-sm">
+                <!-- Player Count Selection -->
+                <div>
+                    <label class="block font-heading font-bold text-slate-200 mb-2">
+                        <i class="fa-solid fa-users text-sky-400"></i> เลือกจำนวนผู้เล่น:
+                    </label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" onclick="setPlayerCount(2)" id="btn-p2" class="p-3 rounded-2xl border-2 border-sky-500 bg-sky-950/60 font-heading font-bold text-white transition hover:scale-105">
+                            2 คน
+                        </button>
+                        <button type="button" onclick="setPlayerCount(3)" id="btn-p3" class="p-3 rounded-2xl border-2 border-slate-700 bg-slate-900/80 font-heading font-bold text-slate-400 transition hover:scale-105">
+                            3 คน
+                        </button>
+                        <button type="button" onclick="setPlayerCount(4)" id="btn-p4" class="p-3 rounded-2xl border-2 border-slate-700 bg-slate-900/80 font-heading font-bold text-slate-400 transition hover:scale-105">
+                            4 คน
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Timer & Lap Settings -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-heading font-bold text-slate-200 mb-1">
+                            <i class="fa-solid fa-stopwatch text-amber-400"></i> เวลาต่อข้อ:
+                        </label>
+                        <select id="select-timer" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-sarabun focus:border-sky-400 outline-none">
+                            <option value="20">20 วินาที</option>
+                            <option value="30" selected>30 วินาที</option>
+                            <option value="45">45 วินาที</option>
+                            <option value="0">ไม่จำกัดเวลา</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-heading font-bold text-slate-200 mb-1">
+                            <i class="fa-solid fa-flag-checkered text-emerald-400"></i> จำนวนรอบจบเกม:
+                        </label>
+                        <select id="select-laps" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-sarabun focus:border-sky-400 outline-none">
+                            <option value="1">1 รอบ (เล่นเร็ว)</option>
+                            <option value="2" selected>2 รอบ (แนะนำ)</option>
+                            <option value="3">3 รอบ</option>
+                            <option value="5">5 รอบ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Player Name Inputs Container -->
+                <div id="player-inputs-container" class="space-y-2 pt-2">
+                    <!-- Dynamic Player Name Fields Generated Here -->
+                </div>
+            </div>
+
+            <!-- Start Game Button -->
+            <button onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 hover:from-sky-400 hover:to-purple-500 active:scale-95 font-heading font-extrabold text-base text-white rounded-2xl shadow-xl shadow-sky-500/25 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play text-lg"></i>
+                <span>เริ่มการผจญภัย!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. MAIN GAMEPLAY SCREEN -->
+    <div id="screen-game" class="relative z-10 max-w-6xl mx-auto w-full p-2 sm:p-4 flex flex-col justify-between min-h-screen">
+        
+        <!-- Header HUD -->
+        <header class="cyber-glass rounded-2xl p-3 sm:p-4 mb-3 flex flex-wrap items-center justify-between gap-2 sm:gap-4 border border-sky-500/30">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-purple-600 flex items-center justify-center text-xl text-white shadow-md">
+                    🎲
+                </div>
+                <div>
+                    <h2 class="font-heading font-bold text-sm sm:text-base text-sky-300 leading-tight">
+                        ALGORITHM MILLIONAIRE
+                    </h2>
+                    <p class="text-[10px] sm:text-xs text-slate-400">เกมเศรษฐีอัลกอริทึม ม.1</p>
+                </div>
+            </div>
+
+            <!-- Current Turn Banner & Action Controls -->
+            <div id="turn-indicator" class="flex items-center gap-3 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700">
+                <div id="turn-avatar" class="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-sm font-bold text-white">
+                    P1
+                </div>
+                <div class="text-xs">
+                    <div id="turn-name" class="font-heading font-bold text-sky-300">ตาของ: ผู้เล่น 1</div>
+                    <div id="turn-lap-info" class="text-[10px] text-slate-400">รอบที่ 1/2</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2">
+                <button onclick="openTeacherDashboard()" class="px-3 py-1.5 bg-indigo-900/60 hover:bg-indigo-800 border border-indigo-400/50 rounded-xl text-xs font-heading font-bold text-indigo-200 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-chalkboard-user text-amber-400"></i>
+                    <span class="hidden sm:inline">โหมดครู</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN BOARD & CENTER HUD AREA -->
+        <main class="flex-1 flex flex-col items-center justify-center my-1 relative">
+            <!-- 11x11 Grid Board -->
+            <div id="game-board" class="board-grid relative">
+                <!-- Outer 40 Tiles mapped dynamically -->
+
+                <!-- BOARD CENTER HUD (Spans grid rows 2-10 & cols 2-10) -->
+                <div class="col-start-2 col-end-11 row-start-2 row-end-11 bg-slate-950/90 rounded-2xl p-3 sm:p-6 border border-slate-800/80 flex flex-col justify-between items-center text-center relative overflow-hidden shadow-inner">
+                    
+                    <!-- Background Watermark -->
+                    <div class="absolute inset-0 opacity-5 flex items-center justify-center pointer-events-none text-9xl text-sky-400 font-heading font-extrabold">
+                        ALG
+                    </div>
+
+                    <!-- Center Top: Players Leaderboard Bar -->
+                    <div id="center-leaderboard" class="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 z-10">
+                        <!-- Player Mini Cards Generated via JS -->
+                    </div>
+
+                    <!-- Center Middle: Interactive Dice Roll Area -->
+                    <div class="my-4 space-y-3 z-10">
+                        <!-- Dice Display Cube -->
+                        <div id="dice-container" class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 border-2 border-white/40 flex items-center justify-center text-4xl sm:text-5xl font-extrabold text-white shadow-2xl dice-glow transition active:scale-90 cursor-pointer" onclick="rollDice()">
+                            <span id="dice-value">🎲</span>
+                        </div>
+
+                        <!-- Roll Button -->
+                        <button id="btn-roll-dice" onclick="rollDice()" class="px-6 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 active:scale-95 text-white font-heading font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-sky-500/30 transition flex items-center justify-center gap-2 mx-auto">
+                            <i class="fa-solid fa-dice"></i>
+                            <span>ทอยลูกเต๋า!</span>
+                        </button>
+                    </div>
+
+                    <!-- Center Bottom: Event Game Log -->
+                    <div class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-2 sm:p-2.5 text-left text-[11px] sm:text-xs z-10 max-h-24 overflow-y-auto space-y-1" id="game-log">
+                        <div class="text-sky-400 font-bold">🎮 ยินดีต้อนรับสู่ Algorithm Millionaire! กดปุ่ม "ทอยลูกเต๋า" เพื่อเริ่มเดิน</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 3. QUESTION MODAL -->
+    <div id="modal-question" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="cyber-glass max-w-2xl w-full rounded-3xl p-5 sm:p-7 border-2 border-sky-400/50 space-y-5 text-left shadow-2xl relative overflow-hidden">
+            
+            <!-- Question Header HUD -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span id="q-category-badge" class="px-3 py-1 rounded-full text-xs font-heading font-bold bg-sky-500/20 text-sky-300 border border-sky-400/40">
+                        💡 ช่องคำถามความรู้
+                    </span>
+                    <span id="q-difficulty-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-heading font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                        ระดับง่าย (+100)
+                    </span>
+                </div>
+                <!-- Countdown Timer -->
+                <div id="q-timer-container" class="flex items-center gap-1.5 font-heading font-bold text-amber-400 text-sm sm:text-base bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-500/30">
+                    <i class="fa-solid fa-stopwatch animate-spin"></i>
+                    <span id="q-timer-text">30s</span>
+                </div>
+            </div>
+
+            <!-- Question Text -->
+            <div class="space-y-2">
+                <h3 id="q-title" class="font-heading font-bold text-base sm:text-xl text-white leading-relaxed">
+                    คำถามจะปรากฏขึ้นที่นี่...
+                </h3>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="q-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <!-- 4 Options generated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ANSWER EXPLANATION / FEEDBACK MODAL -->
+    <div id="modal-explanation" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="cyber-card-gold max-w-xl w-full rounded-3xl p-6 sm:p-8 space-y-5 text-center shadow-2xl relative">
+            
+            <!-- Result Icon -->
+            <div id="exp-icon-container" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border-2">
+                <i id="exp-icon" class="fa-solid fa-check"></i>
+            </div>
+
+            <!-- Result Header -->
+            <div class="space-y-1">
+                <h3 id="exp-status-title" class="font-heading font-extrabold text-xl sm:text-2xl text-white">
+                    ตอบถูกต้อง! (+100 คะแนน)
+                </h3>
+                <p id="exp-correct-answer-text" class="text-xs sm:text-sm text-emerald-300 font-bold">
+                    <!-- Shows correct choice if user answered wrong -->
+                </p>
+            </div>
+
+            <!-- Detailed Explanation Box -->
+            <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 text-xs sm:text-sm text-slate-200 text-left space-y-2 font-sarabun leading-relaxed">
+                <div class="font-heading font-bold text-amber-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-lightbulb"></i> คำอธิบายอย่างละเอียด:
+                </div>
+                <p id="exp-detail-text">
+                    คำอธิบายอัลกอริทึมประกอบ...
+                </p>
+            </div>
+
+            <button onclick="closeExplanationModal()" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-98 font-heading font-extrabold text-slate-950 text-sm sm:text-base rounded-2xl shadow-xl transition flex items-center justify-center gap-2">
+                <span>ดำเนินเกมต่อ</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. EVENT / TRAP / BONUS POPUP MODAL -->
+    <div id="modal-event" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="cyber-glass max-w-md w-full rounded-3xl p-6 space-y-5 text-center border-2 border-sky-400/50 shadow-2xl">
+            <div id="event-avatar" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border-2">
+                🎁
+            </div>
+            <div class="space-y-1">
+                <h3 id="event-title" class="font-heading font-extrabold text-xl text-white">
+                    ตกช่องโบนัส!
+                </h3>
+                <p id="event-desc" class="text-xs sm:text-sm text-slate-300">
+                    รับคะแนนเพิ่มฟรี +200 คะแนน
+                </p>
+            </div>
+            <button onclick="closeEventModal()" class="w-full py-3 bg-sky-500 hover:bg-sky-400 font-heading font-bold text-white text-sm rounded-xl transition">
+                รับทราบ
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. TEACHER DASHBOARD MODAL -->
+    <div id="modal-teacher" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="cyber-glass max-w-3xl w-full rounded-3xl p-5 sm:p-7 space-y-5 text-left border-2 border-indigo-500/50 shadow-2xl max-h-[90vh] flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-heading font-bold text-lg text-white">โหมดครู (Teacher Dashboard)</h3>
+                        <p class="text-xs text-indigo-300">สรุปการเรียนรู้และความแม่นยำของนักเรียน</p>
+                    </div>
+                </div>
+                <button onclick="closeTeacherDashboard()" class="text-slate-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Stats Overview Cards -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-xs text-slate-400">ตอบคำถามทั้งหมด</div>
+                    <div id="dash-total-q" class="font-heading font-extrabold text-xl text-sky-400">0 ข้อ</div>
+                </div>
+                <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-xs text-slate-400">ความแม่นยำรวม</div>
+                    <div id="dash-accuracy" class="font-heading font-extrabold text-xl text-emerald-400">0%</div>
+                </div>
+                <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-xs text-slate-400">หัวข้อหลุดบ่อยที่สุด</div>
+                    <div id="dash-hardest-topic" class="font-heading font-bold text-xs sm:text-sm text-amber-400 truncate mt-1">-</div>
+                </div>
+            </div>
+
+            <!-- Player Accuracy Table -->
+            <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+                <h4 class="font-heading font-bold text-xs text-sky-300 uppercase tracking-wider">รายละเอียดผู้เรียนแต่ละคน</h4>
+                <div class="bg-slate-900/90 rounded-2xl border border-slate-800 overflow-hidden text-xs">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-800/80 text-slate-300 font-heading">
+                            <tr>
+                                <th class="p-2.5">ผู้เล่น</th>
+                                <th class="p-2.5 text-center">คะแนน</th>
+                                <th class="p-2.5 text-center">ตอบถูก/ทั้งหมด</th>
+                                <th class="p-2.5 text-center">ความแม่นยำ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-players-tbody" class="divide-y divide-slate-800">
+                            <!-- Rows generated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button onclick="closeTeacherDashboard()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 font-heading font-bold text-white text-sm rounded-xl transition">
+                กลับสู่เกม
+            </button>
+        </div>
+    </div>
+
+    <!-- 7. GAME OVER VICTORY MODAL -->
+    <div id="modal-gameover" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-500">
+        <div class="cyber-glass rounded-3xl max-w-lg w-full p-6 sm:p-8 border-2 border-sky-400/80 shadow-2xl text-center space-y-6">
+            
+            <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 via-sky-500 to-purple-600 text-white rounded-3xl mx-auto flex items-center justify-center text-4xl shadow-2xl animate-bounce">
+                🏆
+            </div>
+
+            <div class="space-y-1">
+                <h2 class="font-heading text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-purple-200 to-amber-300">
+                    จบการแข่งขันอัลกอริทึม!
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-300">
+                    ขอแสดงความยินดีกับผู้ชนะและผู้ร่วมผจญภัยทุกคน
+                </p>
+            </div>
+
+            <!-- Leaderboard Rankings -->
+            <div id="gameover-rankings" class="space-y-2 text-left">
+                <!-- Dynamic Rankings Cards -->
+            </div>
+
+            <button onclick="restartGame()" class="w-full py-3.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 hover:from-sky-400 hover:to-purple-500 font-heading font-extrabold text-white text-base rounded-2xl shadow-xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>เล่นใหม่อีกครั้ง</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ======================================================================
+         * 1. GLOBAL STATE MANAGEMENT & AUDIO SYNTHESIZER
+         * ====================================================================== */
+        let playerCount = 2;
+        let timerSetting = 30; // seconds
+        let totalLapsSetting = 2;
+        let currentTurnIndex = 0;
+        let isMoving = false;
+        let timerInterval = null;
+        let currentQuestion = null;
+
+        // Player Data Structure
+        let players = [];
+        const PLAYER_COLORS = [
+            { bg: 'bg-sky-500', border: 'border-sky-300', hex: '#38bdf8', icon: '🤖' },
+            { bg: 'bg-pink-500', border: 'border-pink-300', hex: '#ec4899', icon: '🚀' },
+            { bg: 'bg-amber-500', border: 'border-amber-300', hex: '#f59e0b', icon: '⚡' },
+            { bg: 'bg-emerald-500', border: 'border-emerald-300', hex: '#10b981', icon: '💻' }
+        ];
+
+        // Teacher Analytics Tracking
+        let analytics = {
+            totalQuestionsAnswered: 0,
+            totalCorrect: 0,
+            topicMisses: {}
+        };
+
+        // Web Audio API Synthesizer (No external sound files required)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'dice') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'step') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'bonus') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, now); // D5
+                osc.frequency.setValueAtTime(880, now + 0.12); // A5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        /* ======================================================================
+         * 2. QUESTION BANK DATA (35+ COMPREHENSIVE M.1 QUESTIONS)
+         * ====================================================================== */
+        const QUESTION_BANK = [
+            // Definition & Problem Solving
+            {
+                id: 1,
+                topic: "ความหมายของอัลกอริทึม",
+                diff: "Easy",
+                points: 100,
+                q: "ข้อใดคือความหมายที่ถูกต้องที่สุดของ 'อัลกอริทึม' (Algorithm)?",
+                opts: [
+                    "ภาษาคอมพิวเตอร์ชนิดหนึ่งที่ใช้วาดรูป",
+                    "ขั้นตอนการทำงานหรือการแก้ปัญหาอย่างเป็นลำดับขั้น",
+                    "อุปกรณ์สำหรับเชื่อมต่ออินเทอร์เน็ตความเร็วสูง",
+                    "ซอฟต์แวร์ประมวลผลคำสำหรับพิมพ์รายงาน"
+                ],
+                ans: 1,
+                exp: "อัลกอริทึม (Algorithm) คือ ลำดับขั้นตอนการทำงาน หรือการแก้ปัญหาที่ชัดเจน เป็นขั้นตอน สามารถปฏิบัติตามเพื่อนำไปสู่ผลลัพธ์ที่ถูกต้องได้"
+            },
+            {
+                id: 2,
+                topic: "คุณสมบัติอัลกอริทึม",
+                diff: "Easy",
+                points: 100,
+                q: "ข้อใดเป็นคุณสมบัติที่ดีของอัลกอริทึม?",
+                opts: [
+                    "มีความคลุมเครือเพื่อให้ตีความได้หลายแบบ",
+                    "มีขั้นตอนการทำงานที่ไม่สิ้นสุด",
+                    "มีความชัดเจน สั้นกระชับ และมีจุดสิ้นสุด",
+                    "ใช้ได้เฉพาะการเขียนโปรแกรมเท่านั้น"
+                ],
+                ans: 2,
+                exp: "อัลกอริทึมที่ดีต้องมีความชัดเจน ไม่คลุมเครือ มีขั้นตอนเป็นลำดับชัดเจน และต้องมีจุดสิ้นสุดของการทำงานเสมอ"
+            },
+            {
+                id: 3,
+                topic: "ขั้นตอนแก้ปัญหา",
+                diff: "Medium",
+                points: 200,
+                q: "ขั้นตอนแรกของการแก้ปัญหาด้วยคอมพิวเตอร์คืออะไร?",
+                opts: [
+                    "การเขียนโปรแกรม (Coding)",
+                    "การทำความเข้าใจและวิเคราะห์ปัญหา (Problem Analysis)",
+                    "การทดสอบและแก้ไขโปรแกรม (Debugging)",
+                    "การจัดทำเอกสารคู่มือ (Documentation)"
+                ],
+                ans: 1,
+                exp: "การวิเคราะห์และทำความเข้าใจปัญหา เป็นขั้นตอนแรกสุดที่สำคัญ เพื่อให้รู้ว่าต้องการอะไร ข้อมูลเข้าคืออะไร และผลลัพธ์ที่ต้องการคืออะไร"
+            },
+
+            // Flowchart Symbols
+            {
+                id: 4,
+                topic: "ผังงาน (Flowchart)",
+                diff: "Easy",
+                points: 100,
+                q: "สัญลักษณ์วงรี (Terminal) ในผังงานใช้แทนความหมายใด?",
+                opts: [
+                    "การประมวลผลคำนวณ",
+                    "จุดเริ่มต้น หรือ จุดสิ้นสุด",
+                    "การตัดสินใจเงื่อนไข",
+                    "การรับข้อมูลจากคีย์บอร์ด"
+                ],
+                ans: 1,
+                exp: "สัญลักษณ์วงรีหรือแคปซูล (Terminal) ใช้ระบุ 'จุดเริ่มต้น' (Start) หรือ 'จุดสิ้นสุด' (End) ของผังงาน"
+            },
+            {
+                id: 5,
+                topic: "ผังงาน (Flowchart)",
+                diff: "Easy",
+                points: 100,
+                q: "สัญลักษณ์สี่เหลี่ยมผืนผ้า (Process) ในผังงานใช้ทำหน้าที่อะไร?",
+                opts: [
+                    "การรับข้อมูลเข้า",
+                    "การประมวลผล หรือ คำนวณ",
+                    "การตัดสินใจเลือกทำ",
+                    "จุดเชื่อมต่อผังงาน"
+                ],
+                ans: 1,
+                exp: "สี่เหลี่ยมผืนผ้า (Process) ใช้แทนขั้นตอนการปฏิบัติงาน การกำหนดค่า หรือการคำนวณประมวลผลข้อมูล"
+            },
+            {
+                id: 6,
+                topic: "ผังงาน (Flowchart)",
+                diff: "Medium",
+                points: 200,
+                q: "สัญลักษณ์สี่เหลี่ยมข้าวหลามตัด (Decision) ใช้ในกรณีใด?",
+                opts: [
+                    "การเลือกทำตามเงื่อนไข (ใช่/ไม่ใช่)",
+                    "การแสดงผลลัพธ์ออกทางจอภาพ",
+                    "การกำหนดจุดเริ่มต้นของโปรแกรม",
+                    "การเชื่อมต่อผังงานคนละหน้า"
+                ],
+                ans: 0,
+                exp: "สี่เหลี่ยมข้าวหลามตัด (Decision) ใช้สำหรับการตัดสินใจตรวจสอบเงื่อนไข โดยจะมีเส้นทางออกจากสัญลักษณ์อย่างน้อย 2 ทาง (เช่น จริง/เท็จ)"
+            },
+            {
+                id: 7,
+                topic: "ผังงาน (Flowchart)",
+                diff: "Medium",
+                points: 200,
+                q: "สัญลักษณ์สี่เหลี่ยมด้านขนาน (Input/Output) ใช้แทนสิ่งใด?",
+                opts: [
+                    "การประมวลผลภายใน CPU",
+                    "การนำเข้าหรือแสดงผลข้อมูลโดยไม่ระบุอุปกรณ์",
+                    "การเชื่อมต่อจุดสองจุดเข้าด้วยกัน",
+                    "การทำซ้ำจนกว่าจะบรรลุเป้าหมาย"
+                ],
+                ans: 1,
+                exp: "สี่เหลี่ยมด้านขนาน (Data / General Input-Output) ใช้แทนการรับข้อมูลเข้า หรือแสดงผลข้อมูลทั่วไปโดยไม่ระบุชนิดอุปกรณ์"
+            },
+            {
+                id: 8,
+                topic: "ผังงาน (Flowchart)",
+                diff: "Hard",
+                points: 300,
+                q: "สัญลักษณ์วงกลมเล็ก (Connector) ในผังงานมีประโยชน์อย่างไร?",
+                opts: [
+                    "เชื่อมสายงานหลายเส้นให้มารวมที่จุดเดียวกัน",
+                    "ใช้ระบุการรับข้อมูลด้วยเมาส์",
+                    "ใช้คูณข้อมูลจำนวนเต็ม",
+                    "ใช้แสดงว่าโปรแกรมเกิดข้อผิดพลาด"
+                ],
+                ans: 0,
+                exp: "วงกลมเล็ก (Connector) คือจุดเชื่อมต่อภายในหน้าเดียวกัน ช่วยลดความซับซ้อนของเส้นทิศทาง (Flowline) ไม่ให้ตัดกันยุ่งเหยิง"
+            },
+
+            // Control Structures
+            {
+                id: 9,
+                topic: "โครงสร้างควบคุม",
+                diff: "Easy",
+                points: 100,
+                q: "โครงสร้างแบบ 'ทำตามลำดับ' (Sequential Structure) มีลักษณะอย่างไร?",
+                opts: [
+                    "ทำงานจากบนลงล่าง ทีละขั้นตอน ไม่มีการข้าม",
+                    "เลือกทำเฉพาะขั้นตอนที่เงื่อนไขเป็นจริงเท่านั้น",
+                    "วนกลับมาทำขั้นตอนเดิมซ้ำๆ หลายรอบ",
+                    "สุ่มทำขั้นตอนใดก่อนก็ได้ตามใจชอบ"
+                ],
+                ans: 0,
+                exp: "โครงสร้างแบบลำดับ (Sequential Structure) จะทำงานเรียงตามลำดับคำสั่งตั้งแต่คำสั่งแรกจนถึงคำสั่งสุดท้ายจากบนลงล่างอย่างเป็นระเบียบ"
+            },
+            {
+                id: 10,
+                topic: "โครงสร้างควบคุม",
+                diff: "Medium",
+                points: 200,
+                q: "สถานการณ์ใดต่อไปนี้ใช้โครงสร้างแบบ 'ทางเลือก/เงื่อนไข' (Condition/Selection)?",
+                opts: [
+                    "การต้มน้ำจนกว่าน้ำจะเดือด",
+                    "การตรวจสอบถ้านักเรียนได้คะแนน >= 50 ถือว่าผ่าน",
+                    "การกวาดบ้านตั้งแต่ห้องนอนไปห้องรับแขก",
+                    "การนับเลข 1 ถึง 100 ตามลำดับ"
+                ],
+                ans: 1,
+                exp: "การตรวจคะแนนสอบเพื่อแยก 'ผ่าน/ไม่ผ่าน' เป็นโครงสร้างเงื่อนไข เพราะมีการตัดสินใจตรวจสอบเงื่อนไขก่อนเลือกทำทางใดทางหนึ่ง"
+            },
+            {
+                id: 11,
+                topic: "โครงสร้างควบคุม",
+                diff: "Hard",
+                points: 300,
+                q: "สถานการณ์ใดควรใช้โครงสร้างแบบ 'ทำซ้ำ' (Loop/Iterative Structure)?",
+                opts: [
+                    "การเช็คราคาอาหารก่อนสั่งซื้อ",
+                    "การเติมเงินเข้าบัตรโดยสารรถไฟฟ้า 1 ครั้ง",
+                    "การวิ่งรอบสนามฟุตบอลจำนวน 5 รอบ",
+                    "การเปิดไฟห้องนอนเมื่อฟ้ามืด"
+                ],
+                ans: 2,
+                exp: "การวิ่งรอบสนาม 5 รอบ มีการปฏิบัติตามขั้นตอนเดิมซ้ำกันตามจำนวนรอบที่กำหนด จึงตรงกับโครงสร้างแบบทำซ้ำ (Loop)"
+            },
+
+            // Real life scenarios & Pseudocode
+            {
+                id: 12,
+                topic: "อัลกอริทึมชีวิตประจำวัน",
+                diff: "Easy",
+                points: 100,
+                q: "ในการต้มบะหมี่สำเร็จรูป ข้อใดคือขั้นตอนการตรวจสอบเงื่อนไข?",
+                opts: [
+                    "เปิดซองบะหมี่ใส่ชาม",
+                    "เทน้ำร้อนใส่ชาม",
+                    "ตรวจสอบว่าเส้นนุ่มดีหรือยัง ถ้ายังให้รอต่อ",
+                    "รับประทานบะหมี่ต้ม"
+                ],
+                ans: 2,
+                exp: "การเช็คว่าเส้นนุ่มหรือยังเป็นขั้นตอนตรวจสอบเงื่อนไข หากยังไม่นุ่มก็จะวนรอ ถ้านุ่มแล้วจึงจะทำขั้นตอนถัดไป"
+            },
+            {
+                id: 13,
+                topic: "อัลกอริทึมชีวิตประจำวัน",
+                diff: "Medium",
+                points: 200,
+                q: "เรียงลำดับขั้นตอนอัลกอริทึม 'การข้ามถนนด้วยสัญญาณไฟจราจร': A:มองซ้ายขวา B:กดปุ่มข้ามไฟ C:รอไฟเขียวคนข้าม D:เดินข้ามถนน",
+                opts: [
+                    "A -> B -> C -> D",
+                    "B -> C -> A -> D",
+                    "C -> B -> D -> A",
+                    "D -> C -> B -> A"
+                ],
+                ans: 1,
+                exp: "ลำดับที่ปลอดภัยที่สุดคือ: กดปุ่มขอข้าม (B) -> รอจนสัญญาณไฟเขียวคนข้ามเปิด (C) -> มองซ้ายขวาเพื่อความแน่ใจ (A) -> เดินข้ามถนน (D)"
+            },
+            {
+                id: 14,
+                topic: "รหัสจำลอง (Pseudocode)",
+                diff: "Medium",
+                points: 200,
+                q: "'รหัสจำลอง' (Pseudocode) คืออะไร?",
+                opts: [
+                    "โค้ดภาษาเครื่องที่มีแต่ตัวเลข 0 และ 1",
+                    "การอธิบายขั้นตอนอัลกอริทึมด้วยภาษาพูดที่กระชับกึ่งภาษาโปรแกรม",
+                    "การวาดภาพการ์ตูนแสดงขั้นตอนการทำงาน",
+                    "คำสั่งที่สั่งให้หุ่นยนต์ทำงานโดยอัตโนมัติ"
+                ],
+                ans: 1,
+                exp: "รหัสจำลอง (Pseudocode) คือ การเขียนจำลองขั้นตอนวิธีด้วยภาษาที่มนุษย์เข้าใจง่าย (เช่น ภาษาไทย/อังกฤษ) โดยใช้โครงสร้างเลียนแบบภาษาโปรแกรม"
+            },
+            {
+                id: 15,
+                topic: "รหัสจำลอง (Pseudocode)",
+                diff: "Hard",
+                points: 300,
+                q: "พิจารณารหัสจำลอง: \n1. SUM = 0 \n2. FOR i = 1 TO 3 DO \n   SUM = SUM + 2 \n3. PRINT SUM \nผลลัพธ์ที่ได้คือเท่าใด?",
+                opts: [
+                    "2",
+                    "4",
+                    "6",
+                    "8"
+                ],
+                ans: 2,
+                exp: "วนทำซ้ำ 3 รอบ (i=1,2,3): \nรอบ 1: SUM = 0+2 = 2 \nรอบ 2: SUM = 2+2 = 4 \nรอบ 3: SUM = 4+2 = 6 \nผลลัพธ์สุดท้ายที่พิมพ์ออกมาคือ 6"
+            },
+            {
+                id: 16,
+                topic: "การแก้ไขข้อผิดพลาด",
+                diff: "Hard",
+                points: 300,
+                q: "คำว่า 'Infinite Loop' (การวนซ้ำไม่สิ้นสุด) เกิดจากสาเหตุใด?",
+                opts: [
+                    "เงื่อนไขของการทำซ้ำเป็นจริงเสมอจนไม่มีทางเป็นเท็จ",
+                    "ลืมใส่จุดเริ่มต้นของผังงาน",
+                    "เครื่องคอมพิวเตอร์ไม่มีหน่วยความจำเพียงพอ",
+                    "การเขียนสัญลักษณ์สี่เหลี่ยมผิดขนาด"
+                ],
+                ans: 0,
+                exp: "Infinite Loop เกิดขึ้นเมื่อเงื่อนไขที่ใช้หยุดการทำซ้ำไม่มีวันเป็นจริง ส่งผลให้โปรแกรมทำงานวนลูปไปเรื่อยๆ โดยไม่สิ้นสุด"
+            },
+            {
+                id: 17,
+                topic: "อัลกอริทึมชีวิตประจำวัน",
+                diff: "Easy",
+                points: 100,
+                q: "การชงโกโก้ร้อน ขั้นตอนใดถือเป็น 'การรับข้อมูลเข้า' (Input)?",
+                opts: [
+                    "การคนโกโก้ให้ละลาย",
+                    "การเตรียมผงโกโก้ น้ำร้อน และนมสด",
+                    "การได้โกโก้ร้อนพร้อมดื่ม",
+                    "การดื่มโกโก้หมดแก้ว"
+                ],
+                ans: 1,
+                exp: "วัตถุดิบต่างๆ เช่น ผงโกโก้ น้ำร้อน นม เปรียบเสมือนข้อมูลเข้า (Input) ที่ต้องนำมาใช้ในกระบวนการชงโกโก้"
+            },
+            {
+                id: 18,
+                topic: "การแก้ปัญหาเชิงคำนวณ",
+                diff: "Medium",
+                points: 200,
+                q: "การค้นหาชื่อเพื่อนในสมุดโทรศัพท์ที่จัดเรียงตามกอไก่-ฮนกฮูก ควรใช้อัลกอริทึมแบบใดรวดเร็วที่สุด?",
+                opts: [
+                    "เปิดอ่านทีละหน้าตั้งแต่หน้าแรกไปเรื่อยๆ",
+                    "สุ่มเปิดหน้าไหนก็ได้ตามโชคชะตา",
+                    "เปิดกลางเล่ม แล้วดูว่าชื่อที่หาอยู่ก่อนหรือหลังหน้านี้ (Binary Search)",
+                    "อ่านจากหน้าสุดท้ายย้อนกลับมาหน้าแรก"
+                ],
+                ans: 2,
+                exp: "การแบ่งครึ่งค้นหา (Binary Search) โดยดูว่าตัวอักษรอยู่ก่อนหรือหลัง จะช่วยลดจำนวนหน้าที่ต้องค้นหาลงครึ่งหนึ่งทุกครั้ง ทำให้ค้นหาได้รวดเร็วมาก"
+            }
+        ];
+
+        /* ======================================================================
+         * 3. BOARD TILE CONFIGURATION (40 PERIMETER TILES)
+         * ====================================================================== */
+        const TOTAL_TILES = 40;
+        
+        // Tile types mapping
+        const TILE_MAP = [
+            { id: 0,  type: 'start',    title: 'START',        icon: '🏁', bg: 'bg-emerald-600', text: 'text-white' },
+            { id: 1,  type: 'question', title: 'ความรู้',      icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 2,  type: 'trap',     typeTitle: 'กับดัก',   icon: '⚠️', bg: 'bg-rose-950/80', text: 'text-rose-400' },
+            { id: 3,  type: 'scenario', title: 'สถานการณ์',   icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 4,  type: 'bonus',    title: 'โบนัส',        icon: '🎁', bg: 'bg-amber-900/80', text: 'text-amber-300' },
+            { id: 5,  type: 'question', title: 'ผังงาน',       icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 6,  type: 'special',  title: 'ไอเทมเกราะ',   icon: '🛡️', bg: 'bg-purple-900/80', text: 'text-purple-300' },
+            { id: 7,  type: 'sequence', title: 'เรียงลำดับ',   icon: '🔢', bg: 'bg-teal-900/80', text: 'text-teal-300' },
+            { id: 8,  type: 'question', title: 'เงื่อนไข',     icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 9,  type: 'trap',     typeTitle: 'กับดัก',   icon: '⚠️', bg: 'bg-rose-950/80', text: 'text-rose-400' },
+            { id: 10, type: 'special',  title: 'ทอยฟรี',       icon: '🎲', bg: 'bg-purple-900/80', text: 'text-purple-300' },
+            { id: 11, type: 'scenario', title: 'จราจร',       icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 12, type: 'question', title: 'สัญลักษณ์',    icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 13, type: 'bonus',    title: 'โบนัส',        icon: '🎁', bg: 'bg-amber-900/80', text: 'text-amber-300' },
+            { id: 14, type: 'sequence', title: 'ต้มมาม่า',     icon: '🔢', bg: 'bg-teal-900/80', text: 'text-teal-300' },
+            { id: 15, type: 'question', title: 'การทำซ้ำ',     icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 16, type: 'trap',     typeTitle: 'กับดัก',   icon: '⚠️', bg: 'bg-rose-950/80', text: 'text-rose-400' },
+            { id: 17, type: 'scenario', title: 'การบ้าน',      icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 18, type: 'question', title: 'รหัสจำลอง',    icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 19, type: 'special',  title: 'ไอเทมเกราะ',   icon: '🛡️', bg: 'bg-purple-900/80', text: 'text-purple-300' },
+            { id: 20, type: 'special',  title: 'จุดพักผ่อน',   icon: '☕', bg: 'bg-cyan-900/80',   text: 'text-cyan-300' },
+            { id: 21, type: 'question', title: 'การประมวลผล', icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 22, type: 'scenario', title: 'ชงโกโก้',      icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 23, type: 'trap',     typeTitle: 'กับดัก',   icon: '⚠️', bg: 'bg-rose-950/80', text: 'text-rose-400' },
+            { id: 24, type: 'bonus',    title: 'โบนัส',        icon: '🎁', bg: 'bg-amber-900/80', text: 'text-amber-300' },
+            { id: 25, type: 'sequence', title: 'เรียงหนังสือ',  icon: '🔢', bg: 'bg-teal-900/80', text: 'text-teal-300' },
+            { id: 26, type: 'question', title: 'ตัวเชื่อม',    icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 27, type: 'special',  title: 'ทอยฟรี',       icon: '🎲', bg: 'bg-purple-900/80', text: 'text-purple-300' },
+            { id: 28, type: 'scenario', title: 'กดเงิน ATM',   icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 29, type: 'question', title: 'วิเคราะห์',    icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 30, type: 'special',  title: 'เซิร์ฟเวอร์',  icon: '⚡', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 31, type: 'question', title: 'วนลูป',        icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 32, type: 'trap',     typeTitle: 'กับดัก',   icon: '⚠️', bg: 'bg-rose-950/80', text: 'text-rose-400' },
+            { id: 33, type: 'bonus',    title: 'โบนัส',        icon: '🎁', bg: 'bg-amber-900/80', text: 'text-amber-300' },
+            { id: 34, type: 'scenario', title: 'ค้นหาข้อมูล',  icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' },
+            { id: 35, type: 'sequence', title: 'ชีวิตประจำวัน',icon: '🔢', bg: 'bg-teal-900/80', text: 'text-teal-300' },
+            { id: 36, type: 'question', title: 'ข้อมูลเข้า',    icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 37, type: 'special',  title: 'ไอเทมเกราะ',   icon: '🛡️', bg: 'bg-purple-900/80', text: 'text-purple-300' },
+            { id: 38, type: 'question', title: 'บั๊กโปรแกรม',  icon: '💡', bg: 'bg-sky-900/80',  text: 'text-sky-300' },
+            { id: 39, type: 'scenario', title: 'คัดแยกขยะ',    icon: '🎬', bg: 'bg-indigo-900/80', text: 'text-indigo-300' }
+        ];
+
+        // Maps 0..39 perimeter tile index to 11x11 Grid Row/Column CSS
+        function getGridCoordinates(tileIndex) {
+            if (tileIndex >= 0 && tileIndex <= 10) {
+                // Bottom Edge: Row 11, Cols 11 -> 1
+                return { row: 11, col: 11 - tileIndex };
+            } else if (tileIndex >= 11 && tileIndex <= 19) {
+                // Left Edge: Cols 1, Rows 10 -> 2
+                return { row: 11 - (tileIndex - 10), col: 1 };
+            } else if (tileIndex >= 20 && tileIndex <= 30) {
+                // Top Edge: Row 1, Cols 1 -> 11
+                return { row: 1, col: 1 + (tileIndex - 20) };
+            } else {
+                // Right Edge: Cols 11, Rows 2 -> 10
+                return { row: 1 + (tileIndex - 30), col: 11 };
+            }
+        }
+
+        /* ======================================================================
+         * 4. INITIALIZATION & SETUP FUNCTIONS
+         * ====================================================================== */
+        function initSetupForm() {
+            setPlayerCount(2);
+        }
+
+        function setPlayerCount(count) {
+            playerCount = count;
+            for (let i = 2; i <= 4; i++) {
+                const btn = document.getElementById(`btn-p${i}`);
+                if (i === count) {
+                    btn.className = "p-3 rounded-2xl border-2 border-sky-500 bg-sky-950/60 font-heading font-bold text-white transition hover:scale-105";
+                } else {
+                    btn.className = "p-3 rounded-2xl border-2 border-slate-700 bg-slate-900/80 font-heading font-bold text-slate-400 transition hover:scale-105";
+                }
+            }
+
+            const container = document.getElementById('player-inputs-container');
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const color = PLAYER_COLORS[i];
+                container.innerHTML += `
+                    <div class="flex items-center gap-2 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                        <div class="w-8 h-8 rounded-lg ${color.bg} flex items-center justify-center text-white text-base">
+                            ${color.icon}
+                        </div>
+                        <input type="text" id="input-pname-${i}" value="ผู้เล่น ${i+1}" placeholder="ชื่อผู้เล่น ${i+1}" class="bg-transparent text-white text-xs sm:text-sm font-sarabun w-full outline-none px-2" />
+                    </div>
+                `;
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('game-board');
+            
+            // Remove existing tiles
+            document.querySelectorAll('.board-tile').forEach(el => el.remove());
+
+            TILE_MAP.forEach((tile) => {
+                const coords = getGridCoordinates(tile.id);
+                const tileDiv = document.createElement('div');
+                tileDiv.id = `tile-${tile.id}`;
+                tileDiv.className = `board-tile ${tile.bg} border border-slate-700/60 flex flex-col items-center justify-between shadow-sm`;
+                tileDiv.style.gridRow = coords.row;
+                tileDiv.style.gridColumn = coords.col;
+
+                tileDiv.innerHTML = `
+                    <div class="text-[9px] sm:text-[10px] font-heading font-bold text-slate-400 opacity-70">#${tile.id}</div>
+                    <div class="text-sm sm:text-lg my-0.5">${tile.icon}</div>
+                    <div class="font-heading font-bold ${tile.text} text-[9px] sm:text-[11px] truncate w-full px-0.5">${tile.title || tile.typeTitle}</div>
+                    <div id="tile-tokens-${tile.id}" class="flex flex-wrap items-center justify-center gap-0.5 min-h-[20px] w-full mt-0.5"></div>
+                `;
+                boardEl.appendChild(tileDiv);
+            });
+        }
+
+        function startGame() {
+            playSound('dice');
+            // Read settings
+            timerSetting = parseInt(document.getElementById('select-timer').value);
+            totalLapsSetting = parseInt(document.getElementById('select-laps').value);
+
+            // Create Player Objects
+            players = [];
+            for (let i = 0; i < playerCount; i++) {
+                const nameInput = document.getElementById(`input-pname-${i}`).value.trim();
+                players.push({
+                    id: i,
+                    name: nameInput || `ผู้เล่น ${i+1}`,
+                    position: 0,
+                    score: 0,
+                    laps: 1,
+                    shields: 0,
+                    color: PLAYER_COLORS[i],
+                    correctAnswers: 0,
+                    totalAnswers: 0
+                });
+            }
+
+            // Hide Setup Screen
+            document.getElementById('screen-setup').classList.add('hidden');
+
+            // Render Board & Update UI
+            renderBoard();
+            updateAllPlayerTokens();
+            updateTurnHUD();
+            updateCenterLeaderboard();
+
+            addLog(`🚀 เกมเริ่มขึ้นแล้ว! จำนวนผู้เล่น ${playerCount} คน (เป้าหมาย ${totalLapsSetting} รอบ)`);
+        }
+
+        /* ======================================================================
+         * 5. GAMEPLAY & DICE ROLLING MECHANICS
+         * ====================================================================== */
+        function updateTurnHUD() {
+            const p = players[currentTurnIndex];
+            document.getElementById('turn-avatar').className = `w-8 h-8 rounded-full ${p.color.bg} flex items-center justify-center text-sm font-bold text-white shadow-md`;
+            document.getElementById('turn-avatar').innerText = p.color.icon;
+            document.getElementById('turn-name').innerText = `ตาของ: ${p.name}`;
+            document.getElementById('turn-lap-info').innerText = `รอบที่ ${p.laps}/${totalLapsSetting} • คะแนน: ${p.score} • เกราะ: ${p.shields}`;
+        }
+
+        function updateCenterLeaderboard() {
+            const container = document.getElementById('center-leaderboard');
+            container.innerHTML = '';
+            
+            players.forEach(p => {
+                container.innerHTML += `
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-1.5 sm:p-2 text-left flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg ${p.color.bg} flex items-center justify-center text-xs text-white font-bold">
+                            ${p.color.icon}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-heading font-bold text-slate-200 text-xs truncate">${p.name}</div>
+                            <div class="text-[10px] text-sky-400 font-bold">${p.score} pts <span class="text-slate-500">(${p.laps}/${totalLapsSetting} รอบ)</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateAllPlayerTokens() {
+            // Clear all token containers
+            for (let i = 0; i < TOTAL_TILES; i++) {
+                const container = document.getElementById(`tile-tokens-${i}`);
+                if (container) container.innerHTML = '';
+            }
+
+            // Append player tokens to corresponding tiles
+            players.forEach(p => {
+                const container = document.getElementById(`tile-tokens-${p.position}`);
+                if (container) {
+                    const token = document.createElement('div');
+                    token.className = `player-token ${p.color.bg} ${p.color.border}`;
+                    token.innerText = p.color.icon;
+                    token.title = `${p.name} (รอบที่ ${p.laps})`;
+                    container.appendChild(token);
+                }
+            });
+        }
+
+        function rollDice() {
+            if (isMoving) return;
+            isMoving = true;
+            playSound('dice');
+
+            const rollBtn = document.getElementById('btn-roll-dice');
+            rollBtn.disabled = true;
+            rollBtn.classList.add('opacity-50');
+
+            const diceEl = document.getElementById('dice-value');
+            let rollCount = 0;
+            const diceFaces = ['1', '2', '3', '4', '5', '6'];
+
+            // Dice roll animation
+            const interval = setInterval(() => {
+                diceEl.innerText = diceFaces[Math.floor(Math.random() * 6)];
+                rollCount++;
+                if (rollCount > 12) {
+                    clearInterval(interval);
+                    const finalSteps = Math.floor(Math.random() * 6) + 1;
+                    diceEl.innerText = finalSteps;
+                    
+                    const p = players[currentTurnIndex];
+                    addLog(`🎲 ${p.name} ทอยได้ ${finalSteps} แต้ม!`);
+                    
+                    // Move player tile by tile
+                    movePlayerSteps(p, finalSteps);
+                }
+            }, 60);
+        }
+
+        function movePlayerSteps(player, steps) {
+            let currentStep = 0;
+
+            const moveInterval = setInterval(() => {
+                currentStep++;
+                player.position++;
+                playSound('step');
+
+                // Check LAP completion
+                if (player.position >= TOTAL_TILES) {
+                    player.position = 0;
+                    player.laps++;
+                    player.score += 100; // Bonus passing Start
+                    playSound('bonus');
+                    addLog(`🏁 ${player.name} เดินครบรอบกระดาน! ได้รับ +100 คะแนนโบนัสจุด Start`);
+                }
+
+                updateAllPlayerTokens();
+                updateCenterLeaderboard();
+
+                if (currentStep >= steps) {
+                    clearInterval(moveInterval);
+                    // Handle tile trigger
+                    setTimeout(() => {
+                        handleTileAction(player);
+                    }, 400);
+                }
+            }, 250);
+        }
+
+        /* ======================================================================
+         * 6. TILE ACTIONS & QUESTION ENGINE
+         * ====================================================================== */
+        function handleTileAction(player) {
+            const tile = TILE_MAP[player.position];
+
+            if (tile.type === 'start') {
+                showEventModal("🏁 จุดเริ่มต้น START", "คุณเดินมาตกจุด Start พอดี! รับพลังงานสมอง +100 คะแนน", 'bonus');
+                player.score += 100;
+                finishTurn();
+            } else if (tile.type === 'bonus') {
+                showEventModal("🎁 ช่องโบนัสโชคดี!", "คุณได้รับโบนัสพิเศษ +200 คะแนน!", 'bonus');
+                player.score += 200;
+                finishTurn();
+            } else if (tile.type === 'trap') {
+                if (player.shields > 0) {
+                    player.shields--;
+                    showEventModal("🛡️ โดนกับดักอัลกอริทึม!", "ไอเทมเกราะป้องกันทำงาน! บล็อกความเสียหาย -100 คะแนนสำเร็จ", 'bonus');
+                } else {
+                    player.score = Math.max(0, player.score - 100);
+                    showEventModal("⚠️ ติดกับดักบั๊ก!", "ระบบขัดข้อง! คุณเสียคะแนน -100 คะแนน", 'wrong');
+                }
+                finishTurn();
+            } else if (tile.type === 'special') {
+                if (tile.title.includes('เกราะ')) {
+                    player.shields++;
+                    showEventModal("🛡️ ได้รับไอเทมเกราะ!", "คุณได้รับเกราะป้องกันกับดัก 1 ชิ้น", 'bonus');
+                } else if (tile.title.includes('ทอยฟรี')) {
+                    showEventModal("🎲 สิทธิ์ทอยเต๋าเพิ่ม!", "ได้รับสิทธิ์ทอยเต๋าอีกครั้งในตานี้!", 'bonus');
+                    isMoving = false;
+                    document.getElementById('btn-roll-dice').disabled = false;
+                    document.getElementById('btn-roll-dice').classList.remove('opacity-50');
+                    updateTurnHUD();
+                    return;
+                } else {
+                    showEventModal("☕ จุดพักผ่อนเซิร์ฟเวอร์", "ไม่มีเหตุการณ์ร้ายแรง พักผ่อนและเตรียมลุยต่อ!", 'bonus');
+                }
+                finishTurn();
+            } else if (tile.type === 'question' || tile.type === 'scenario' || tile.type === 'sequence') {
+                // Trigger Question Modal
+                openQuestionModal(tile.type);
+            }
+        }
+
+        function openQuestionModal(tileType) {
+            // Pick a random question from bank
+            const qIndex = Math.floor(Math.random() * QUESTION_BANK.length);
+            currentQuestion = QUESTION_BANK[qIndex];
+
+            // Render Badges
+            let badgeText = "💡 คำถามความรู้";
+            if (tileType === 'scenario') badgeText = "🎬 คำถามสถานการณ์";
+            if (tileType === 'sequence') badgeText = "🔢 คำถามเรียงลำดับ";
+
+            document.getElementById('q-category-badge').innerText = badgeText;
+            document.getElementById('q-difficulty-badge').innerText = `ระดับ${currentQuestion.diff} (+${currentQuestion.points})`;
+            document.getElementById('q-title').innerText = currentQuestion.q;
+
+            // Render Options
+            const optsContainer = document.getElementById('q-options-container');
+            optsContainer.innerHTML = '';
+
+            currentQuestion.opts.forEach((optText, idx) => {
+                optsContainer.innerHTML += `
+                    <button onclick="submitAnswer(${idx})" class="p-3.5 sm:p-4 bg-slate-900/90 border border-slate-700 hover:border-sky-400 hover:bg-sky-950/40 rounded-2xl text-xs sm:text-sm text-left text-slate-200 font-sarabun transition active:scale-95 flex items-start gap-2.5">
+                        <span class="font-heading font-bold text-sky-400 bg-sky-950 px-2 py-0.5 rounded-lg border border-sky-800">${String.fromCharCode(65 + idx)}</span>
+                        <span>${optText}</span>
+                    </button>
+                `;
+            });
+
+            // Handle Countdown Timer
+            const timerContainer = document.getElementById('q-timer-container');
+            if (timerSetting > 0) {
+                timerContainer.classList.remove('hidden');
+                let timeLeft = timerSetting;
+                document.getElementById('q-timer-text').innerText = `${timeLeft}s`;
+
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('q-timer-text').innerText = `${timeLeft}s`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        submitAnswer(-1); // Timeout wrong answer
+                    }
+                }, 1000);
+            } else {
+                timerContainer.classList.add('hidden');
+            }
+
+            // Show Modal
+            const modal = document.getElementById('modal-question');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+        }
+
+        function submitAnswer(chosenIdx) {
+            clearInterval(timerInterval);
+            const player = players[currentTurnIndex];
+            player.totalAnswers++;
+            analytics.totalQuestionsAnswered++;
+
+            const isCorrect = (chosenIdx === currentQuestion.ans);
+
+            // Hide Question Modal
+            const qModal = document.getElementById('modal-question');
+            qModal.classList.remove('opacity-100');
+            qModal.classList.add('opacity-0', 'pointer-events-none');
+
+            if (isCorrect) {
+                playSound('correct');
+                player.score += currentQuestion.points;
+                player.correctAnswers++;
+                analytics.totalCorrect++;
+
+                showExplanationModal(
+                    true,
+                    `ตอบถูกต้อง! (+${currentQuestion.points} คะแนน)`,
+                    "",
+                    currentQuestion.exp
+                );
+            } else {
+                playSound('wrong');
+                // Track missed topic analytics
+                const topic = currentQuestion.topic || "ทั่วไป";
+                analytics.topicMisses[topic] = (analytics.topicMisses[topic] || 0) + 1;
+
+                const correctText = `คำตอบที่ถูกต้องคือ ข้อ ${String.fromCharCode(65 + currentQuestion.ans)}: ${currentQuestion.opts[currentQuestion.ans]}`;
+                showExplanationModal(
+                    false,
+                    "ตอบยังไม่ถูกต้อง (0 คะแนน)",
+                    correctText,
+                    currentQuestion.exp
+                );
+            }
+        }
+
+        /* ======================================================================
+         * 7. MODAL DISPLAY & TURN MANAGEMENT
+         * ====================================================================== */
+        function showExplanationModal(isCorrect, statusTitle, correctAnsText, detailText) {
+            const iconContainer = document.getElementById('exp-icon-container');
+            const icon = document.getElementById('exp-icon');
+
+            if (isCorrect) {
+                iconContainer.className = "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border-2 bg-emerald-500/20 border-emerald-400 text-emerald-400";
+                icon.className = "fa-solid fa-check";
+            } else {
+                iconContainer.className = "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border-2 bg-rose-500/20 border-rose-400 text-rose-400";
+                icon.className = "fa-solid fa-xmark";
+            }
+
+            document.getElementById('exp-status-title').innerText = statusTitle;
+            document.getElementById('exp-correct-answer-text').innerText = correctAnsText;
+            document.getElementById('exp-detail-text').innerText = detailText;
+
+            const modal = document.getElementById('modal-explanation');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+        }
+
+        function closeExplanationModal() {
+            const modal = document.getElementById('modal-explanation');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            finishTurn();
+        }
+
+        function showEventModal(title, desc, type) {
+            playSound(type === 'wrong' ? 'wrong' : 'bonus');
+            document.getElementById('event-title').innerText = title;
+            document.getElementById('event-desc').innerText = desc;
+
+            const avatar = document.getElementById('event-avatar');
+            if (type === 'wrong') {
+                avatar.className = "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border-2 bg-rose-500/20 border-rose-400 text-rose-400";
+                avatar.innerText = "⚠️";
+            } else {
+                avatar.className = "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border-2 bg-amber-500/20 border-amber-400 text-amber-400";
+                avatar.innerText = "🎁";
+            }
+
+            const modal = document.getElementById('modal-event');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+        }
+
+        function closeEventModal() {
+            const modal = document.getElementById('modal-event');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function finishTurn() {
+            updateCenterLeaderboard();
+
+            // Check if game over condition met (any player reached total max laps)
+            const winner = players.find(p => p.laps > totalLapsSetting);
+            if (winner) {
+                triggerGameOver();
+                return;
+            }
+
+            // Next Turn
+            currentTurnIndex = (currentTurnIndex + 1) % playerCount;
+            isMoving = false;
+            
+            const rollBtn = document.getElementById('btn-roll-dice');
+            rollBtn.disabled = false;
+            rollBtn.classList.remove('opacity-50');
+
+            updateTurnHUD();
+            addLog(`🔄 เปลี่ยนตา! ถึงเวลาของ ${players[currentTurnIndex].name}`);
+        }
+
+        function addLog(msg) {
+            const logBox = document.getElementById('game-log');
+            const item = document.createElement('div');
+            item.className = "text-slate-300";
+            item.innerText = msg;
+            logBox.appendChild(item);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        /* ======================================================================
+         * 8. TEACHER DASHBOARD & GAME OVER
+         * ====================================================================== */
+        function openTeacherDashboard() {
+            playSound('dice');
+            document.getElementById('dash-total-q').innerText = `${analytics.totalQuestionsAnswered} ข้อ`;
+            
+            const accuracy = analytics.totalQuestionsAnswered > 0 
+                ? Math.round((analytics.totalCorrect / analytics.totalQuestionsAnswered) * 100)
+                : 0;
+            document.getElementById('dash-accuracy').innerText = `${accuracy}%`;
+
+            // Find hardest topic
+            let hardestTopic = "-";
+            let maxMisses = 0;
+            for (const [topic, count] of Object.entries(analytics.topicMisses)) {
+                if (count > maxMisses) {
+                    maxMisses = count;
+                    hardestTopic = topic;
+                }
+            }
+            document.getElementById('dash-hardest-topic').innerText = hardestTopic;
+
+            // Render Player Rows
+            const tbody = document.getElementById('dash-players-tbody');
+            tbody.innerHTML = '';
+            players.forEach(p => {
+                const pAcc = p.totalAnswers > 0 ? Math.round((p.correctAnswers / p.totalAnswers) * 100) : 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="p-2.5 font-bold flex items-center gap-2">
+                            <span>${p.color.icon}</span>
+                            <span>${p.name}</span>
+                        </td>
+                        <td class="p-2.5 text-center font-bold text-sky-400">${p.score}</td>
+                        <td class="p-2.5 text-center">${p.correctAnswers}/${p.totalAnswers}</td>
+                        <td class="p-2.5 text-center font-bold text-emerald-400">${pAcc}%</td>
+                    </tr>
+                `;
+            });
+
+            const modal = document.getElementById('modal-teacher');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+        }
+
+        function closeTeacherDashboard() {
+            const modal = document.getElementById('modal-teacher');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function triggerGameOver() {
+            playSound('correct');
+            // Sort players by score descending
+            const sorted = [...players].sort((a, b) => b.score - a.score);
+
+            const rankingsContainer = document.getElementById('gameover-rankings');
+            rankingsContainer.innerHTML = '';
+
+            sorted.forEach((p, rank) => {
+                const medals = ['🥇 อันดับ 1 (แชมป์อัลกอริทึม)', '🥈 อันดับ 2', '🥉 อันดับ 3', '🏅 อันดับ 4'];
+                rankingsContainer.innerHTML += `
+                    <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl">${p.color.icon}</div>
+                            <div>
+                                <div class="font-heading font-bold text-sm text-white">${p.name}</div>
+                                <div class="text-xs text-sky-400">${medals[rank]}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-heading font-extrabold text-lg text-amber-400">${p.score} pts</div>
+                            <div class="text-[10px] text-slate-400">ตอบถูก ${p.correctAnswers} ข้อ</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const modal = document.getElementById('modal-gameover');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+        }
+
+        function restartGame() {
+            playSound('dice');
+            location.reload();
+        }
+
+        // Initialize setup screen
+        window.onload = function() {
+            initSetupForm();
+        };
+    </script>
+</body>
+</html>
